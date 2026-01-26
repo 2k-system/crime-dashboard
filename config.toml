@@ -1,0 +1,25 @@
+[theme]
+# The primary color for interactive elements (like the radio buttons and sliders)
+primaryColor = "#d33682"
+
+# Background color for the main content area
+backgroundColor = "#f0f2f6"
+
+# Background color for the sidebar
+secondaryBackgroundColor = "#ffffff"
+
+# Color for text
+textColor = "#262730"
+
+# Font family (options: "sans serif", "serif", or "monospace")
+font = "sans serif"
+
+[server]
+# This ensures the app doesn't show the "Streamlit" footer/header for a cleaner look
+headless = true
+enableCORS = false
+enableXsrfProtection = false
+
+[browser]
+# Removes the "Deploy" button and GitHub link in the top right for a cleaner UI
+gatherUsageStats = false
