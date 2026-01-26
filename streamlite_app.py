@@ -1,9 +1,9 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from analysis.statistical_analysis import perform_statistical_analysis
-from analysis.visual_analysis import perform_visual_analysis
-from analysis.safety_analysis import analyze_safety_status
+from statistical_analysis import perform_statistical_analysis
+from visual_analysis import perform_visual_analysis
+from safety_analysis import analyze_safety_status
 
 # Page Config
 st.set_page_config(layout="wide", page_title="NCRB Analytics")
@@ -100,3 +100,4 @@ elif option == "Which State is Safe?":
     st.subheader("Final Safety Conclusion")
 
     st.info("The safest states are determined by low Crime Intensity relative to population combined with a high Chargesheet Rate, ensuring that most reported crimes are effectively processed.")
+
