@@ -1,10 +1,7 @@
-streamlit
 pandas
-numpy
-matplotlib
-seaborn
-scipy
-scipy.stats 
-prettytable 
 plotly
+scipy
+streamlit
+prettytable
+
 
