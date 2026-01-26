@@ -21,7 +21,7 @@ st.markdown("---") # Visual divider line
 # --- DATA LOADING ---
 @st.cache_data
 def load_data():
-    df = pd.read_csv("data/crime_data.csv")
+    df = pd.read_csv("crime_data.csv")
     df.columns = ['Sr_No', 'State_UT', 'Crimes_2020', 'Crimes_2021', 'Crimes_2022', 
                   'Population_Lakhs_2022', 'Crime_Rate_2022', 'Chargesheet_Rate_2022']
     # Filter totals
@@ -98,4 +98,5 @@ elif option == "Which State is Safe?":
     st.plotly_chart(safety['growth_plot'], use_container_width=True)
     
     st.subheader("Final Safety Conclusion")
+
     st.info("The safest states are determined by low Crime Intensity relative to population combined with a high Chargesheet Rate, ensuring that most reported crimes are effectively processed.")
