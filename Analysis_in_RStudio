@@ -1,0 +1,91 @@
+# Load necessary libraries
+library(tidyverse)
+library(plotly)
+library(cluster)
+library(factoextra)
+
+# 1. LOAD & CLEAN DATA
+df <- read.csv("NCRB_Table_1A.1.csv", check.names = FALSE)
+
+# Define aggregates to remove
+aggregates <- c("Total State (S)", "Total UT(S)", "Total All India")
+df_clean <- df %>% filter(!`State/UT` %in% aggregates)
+
+# Ensure numeric columns (Coerce errors to NA like Python's 'coerce')
+cols_to_fix <- c("2020", "2021", "2022")
+df_clean[cols_to_fix] <- lapply(df_clean[cols_to_fix], function(x) as.numeric(as.character(x)))
+
+# 2. STATISTICAL OUTLIERS
+mean_rate <- mean(df_clean$`Rate of Cognizable Crimes (IPC) (2022)`, na.rm = TRUE)
+std_rate <- sd(df_clean$`Rate of Cognizable Crimes (IPC) (2022)`, na.rm = TRUE)
+outlier_threshold <- mean_rate + (2 * std_rate)
+
+# Identify High-Risk
+outliers_rate <- df_clean %>% filter(`Rate of Cognizable Crimes (IPC) (2022)` > outlier_threshold)
+
+# 3. TREND ANALYSIS (Growth 2020-2022)
+df_clean <- df_clean %>%
+  mutate(Growth_20_22_Pct = ((`2022` - `2020`) / `2020`) * 100)
+
+# 4. SAFETY INDEX (Normalization & Weighting)
+normalize <- function(x) { (x - min(x, na.rm=TRUE)) / (max(x, na.rm=TRUE) - min(x, na.rm=TRUE)) }
+
+df_clean <- df_clean %>%
+  mutate(
+    Eff_Score = normalize(`Chargesheeting Rate (2022)`),
+    Risk_Score = 1 - normalize(`Rate of Cognizable Crimes (IPC) (2022)`),
+    Growth_Score = 1 - normalize(Growth_20_22_Pct),
+    Safety_Index = (Eff_Score * 0.40 + Risk_Score * 0.30 + Growth_Score * 0.30) * 100
+  )
+
+# 5. STATE vs UT CLASSIFICATION
+union_territories <- c("Andaman and Nicobar Islands", "Chandigarh", 
+                       "Dadra and Nagar Haveli and Daman and Diu", "Delhi", 
+                       "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry")
+
+df_clean <- df_clean %>%
+  mutate(state_ut = if_else(`State/UT` %in% union_territories, 0, 1))
+
+# 6. WORKLOAD METRICS
+df_clean <- df_clean %>%
+  mutate(
+    Chargesheeted_Cases_2022 = (`2022` * `Chargesheeting Rate (2022)` / 100),
+    Pending_Cases_2022 = `2022` - Chargesheeted_Cases_2022
+  )
+
+# 7. MACHINE LEARNING: K-MEANS CLUSTERING
+# Select features and scale
+ml_features <- df_clean %>% 
+  select(`2022`, `Chargesheeting Rate (2022)`, Growth_20_22_Pct) %>%
+  drop_na()
+
+scaled_data <- scale(ml_features)
+
+set.seed(42)
+kmeans_result <- kmeans(scaled_data, centers = 3, nstart = 10)
+df_clean$Cluster <- as.factor(kmeans_result$cluster)
+
+# Map Risk Profiles (Note: Check cluster means to verify mapping)
+# R clusters are 1-indexed (1, 2, 3)
+df_clean <- df_clean %>%
+  mutate(Risk_Profile = case_when(
+    Cluster == 1 ~ "High Growth (Efficiency Gap)",
+    Cluster == 2 ~ "High Intensity (High Efficiency)",
+    Cluster == 3 ~ "Low Density (Stable)"
+  ))
+
+# 8. VISUALIZATION: 3-YEAR TRAJECTORY (Line Graph)
+df_line <- df_clean %>%
+  pivot_longer(cols = c("2020", "2021", "2022"), names_to = "Year", values_to = "Crimes")
+
+fig_line <- plot_ly(df_line, x = ~`State/UT`, y = ~Crimes, color = ~Year, type = 'scatter', mode = 'lines+markers') %>%
+  layout(title = "3-Year Crime Trajectory Analysis", xaxis = list(tickangle = -45))
+
+# 9. VISUALIZATION: STACKED WORKLOAD (Bar Chart)
+fig_workload <- plot_ly(df_clean, x = ~`State/UT`, y = ~Chargesheeted_Cases_2022, type = 'bar', name = 'Chargesheeted', marker = list(color = '#00CC96')) %>%
+  add_trace(y = ~Pending_Cases_2022, name = 'Pending', marker = list(color = '#EF553B')) %>%
+  layout(barmode = 'stack', title = "Case Processing Breakdown (2022)")
+
+# Display plots
+fig_line
+fig_workload
