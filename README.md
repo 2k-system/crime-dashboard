@@ -1,4 +1,5 @@
-⚖️ Judicial Workload & Backlog Analytics Report (2022)
+**⚖️ Judicial Workload & Backlog Analytics Report (2022)**
+
 📌 Project Overview
 This project provides a comprehensive analysis of the National Crime Records Bureau (NCRB) 2022 dataset. While raw crime volumes often dominate public discourse, this analysis shifts the focus toward Judicial Efficiency—specifically the gap between case registration (Total Crimes) and case processing (Chargesheeting).
 
